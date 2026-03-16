@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}LearnCode — Вчи Python та JavaScript{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container">
+    <span class="hero-badge">Безкоштовні курси · Від основ до практики</span>
+    <h1>Програмуй у браузері.<br><span class="highlight">Python</span> та <span class="highlight">JavaScript</span>.</h1>
+    <p class="hero-desc">Покрокові уроки, реальні завдання, тести та миттєвий запуск коду. Реєструйся і починай вчитися.</p>
+    <div class="hero-actions">
+      {% if user.is_authenticated %}
+      <a href="{% url 'course_list' %}" class="btn btn-primary">Мої курси</a>
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary">Профіль</a>
+      {% else %}
+      <a href="{% url 'register' %}" class="btn btn-primary">Почати навчання</a>
+      <a href="{% url 'login' %}" class="btn btn-secondary">Увійти</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-label">Переваги</span>
+      <h2 class="section-title">Чому вчитися тут зручно</h2>
+      <p class="section-desc">Матеріал, завдання та тести окремо. Бали та досягнення за успіхи.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="icon">⌨️</div>
+        <h3>Код прямо в браузері</h3>
+        <p>Пиши та запускай код без встановлення. Python через Pyodide, JavaScript — нативно.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="icon">📚</div>
+        <h3>Матеріал і тести окремо</h3>
+        <p>Уроки, завдання з кодом і тести з різними типами питань — у зручних розділах курсу.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="icon">⭐</div>
+        <h3>Бали та оцінки</h3>
+        <p>1 правильна відповідь у тесті = 1 бал. Рейтинги курсів і уроків, ліги та досягнення.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="courses">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-label">Курси</span>
+      <h2 class="section-title">Python та JavaScript</h2>
+      <p class="section-desc">Два курси з нуля. Зареєструйся, щоб перейти до матеріалу та завдань.</p>
+    </div>
+    <div class="courses-grid">
+      {% for course in courses %}
+      {% if user.is_authenticated %}
+      <a href="{% url 'course_detail' slug=course.slug %}" class="course-card {{ course.language }} reveal">
+        <div class="course-card-icon lang-badge">{% if course.language == 'python' %}<img src="{% static 'img/python-badge.svg' %}" alt="Python" class="lang-badge-img">{% elif course.language == 'javascript' %}<img src="{% static 'img/javascript-badge.svg' %}" alt="JavaScript" class="lang-badge-img">{% else %}{{ course.icon }}{% endif %}</div>
+        <h3>{{ course.title }}</h3>
+        <div class="course-card-meta">
+          <span>{{ course.duration_hours }} год</span>
+          <span>{{ course.level }}</span>
+          <span>{{ course.lesson_count }} уроків</span>
+        </div>
+        <p>{{ course.short_description }}</p>
+        <span class="card-link">Почати навчання →</span>
+      </a>
+      {% else %}
+      <a href="{% url 'register' %}?next={% url 'course_detail' slug=course.slug %}" class="course-card {{ course.language }} reveal">
+        <div class="course-card-icon lang-badge">{% if course.language == 'python' %}<img src="{% static 'img/python-badge.svg' %}" alt="Python" class="lang-badge-img">{% elif course.language == 'javascript' %}<img src="{% static 'img/javascript-badge.svg' %}" alt="JavaScript" class="lang-badge-img">{% else %}{{ course.icon }}{% endif %}</div>
+        <h3>{{ course.title }}</h3>
+        <div class="course-card-meta">
+          <span>{{ course.duration_hours }} год</span>
+          <span>{{ course.level }}</span>
+          <span>{{ course.lesson_count }} уроків</span>
+        </div>
+        <p>{{ course.short_description }}</p>
+        <span class="card-link">Почати навчання →</span>
+      </a>
+      {% endif %}
+      {% empty %}
+      <p class="reveal" style="grid-column: 1/-1; color: var(--text-secondary);">Курси з'являться після додавання в адмінці.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-label">Як це працює</span>
+      <h2 class="section-title">Три кроки</h2>
+      <p class="section-desc">Реєстрація → обираєш курс → вчишся: матеріал, завдання, тести.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <h3>Зареєструйся</h3>
+        <p>Створи обліковий запис. Після цього з’являться курси, уроки та тести.</p>
+      </div>
+      <div class="step reveal reveal-delay-1">
+        <h3>Обери курс і розділ</h3>
+        <p>У кожному курсі є розділи: матеріал (уроки), завдання (код), тести. Переходи між ними за вкладками.</p>
+      </div>
+      <div class="step reveal reveal-delay-2">
+        <h3>Збирай бали</h3>
+        <p>Завершуй уроки та проходи тести. 1 правильна відповідь = 1 бал. Оцінюй курси та уроки зірками.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="cta-block reveal">
+      <h2>Готовий почати?</h2>
+      <p>Зареєструйся та отримай доступ до всіх курсів, завдань і тестів.</p>
+      {% if user.is_authenticated %}
+      <a href="{% url 'course_list' %}" class="btn btn-primary">Перейти до курсів</a>
+      {% else %}
+      <a href="{% url 'register' %}" class="btn btn-primary">Зареєструватися</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

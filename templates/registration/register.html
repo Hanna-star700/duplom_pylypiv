@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Реєстрація — LearnCode{% endblock %}
+
+{% block content %}
+<div class="auth-split">
+  <div class="auth-split-left">
+    <div class="auth-split-bg" style="background-image: url('{% static 'img/register-programming.svg' %}');"></div>
+    <div class="auth-split-overlay"></div>
+    <a href="{% url 'home' %}" class="auth-back-link">← На головну</a>
+    <div class="auth-split-brand">
+      <span class="auth-split-logo">LearnCode</span>
+    </div>
+    <p class="auth-split-slogan">Вчись. Пиши код. Досягай цілей.</p>
+  </div>
+
+  <div class="auth-split-right">
+    <div class="auth-split-form-wrap">
+      <h1 class="auth-split-title">Створи обліковий запис</h1>
+      <p class="auth-split-sub">Вже є обліковий запис? <a href="{% url 'login' %}">Увійти</a></p>
+
+      <form method="post" class="auth-split-form">
+        {% csrf_token %}
+        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+        {% if form.non_field_errors %}
+        <div class="auth-form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="auth-split-fields">
+          <div class="auth-field">
+            <label for="id_username">{{ form.username.label }}</label>
+            {{ form.username }}
+            {% if form.username.errors %}<span class="auth-field-error">{{ form.username.errors.0 }}</span>{% endif %}
+          </div>
+          <div class="auth-field">
+            <label for="id_email">{{ form.email.label }}</label>
+            {{ form.email }}
+            {% if form.email.errors %}<span class="auth-field-error">{{ form.email.errors.0 }}</span>{% endif %}
+          </div>
+          <div class="auth-field auth-field-password">
+            <label for="id_password1">{{ form.password1.label }}</label>
+            <div class="auth-password-wrap">
+              {{ form.password1 }}
+              <button type="button" class="auth-password-toggle" aria-label="Показати пароль">
+                <svg class="auth-eye" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="auth-eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+            {% if form.password1.errors %}<span class="auth-field-error">{{ form.password1.errors.0 }}</span>{% endif %}
+          </div>
+          <div class="auth-field">
+            <label for="id_password2">{{ form.password2.label }}</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}<span class="auth-field-error">{{ form.password2.errors.0 }}</span>{% endif %}
+          </div>
+        </div>
+
+        <button type="submit" class="auth-split-btn">Зареєструватися</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  var wrap = document.querySelector('.auth-password-wrap');
+  if (wrap) {
+    var input = wrap.querySelector('input');
+    var btn = wrap.querySelector('.auth-password-toggle');
+    var eye = wrap.querySelector('.auth-eye');
+    var eyeOff = wrap.querySelector('.auth-eye-off');
+    btn.addEventListener('click', function(){
+      var isPass = input.type === 'password';
+      input.type = isPass ? 'text' : 'password';
+      eye.style.display = isPass ? 'none' : 'block';
+      eyeOff.style.display = isPass ? 'block' : 'none';
+    });
+  }
+})();
+</script>
+{% endblock %}

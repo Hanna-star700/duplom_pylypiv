@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ course.title }} — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <div class="page-hero-icon course-lang-badge {% if course.language == 'python' %}python{% else %}javascript{% endif %}">
+      {% if course.language == 'python' %}<img src="{% static 'img/python-badge.svg' %}" alt="Python" class="lang-badge-img">{% elif course.language == 'javascript' %}<img src="{% static 'img/javascript-badge.svg' %}" alt="JavaScript" class="lang-badge-img">{% else %}{{ course.icon }}{% endif %}
+    </div>
+    <div class="page-hero-main">
+      <h1>{{ course.title }}</h1>
+      <p class="page-hero-desc">{{ course.description }}</p>
+      {% if total_lessons > 0 %}
+      <div class="course-progress-wrap">
+        <div class="course-progress-bar">
+          <div class="course-progress-fill" style="width: {% widthratio completed_count total_lessons 100 %}%;"></div>
+        </div>
+        <span class="course-progress-label">Пройдено {{ completed_count }} з {{ total_lessons }} уроків</span>
+      </div>
+      {% endif %}
+      <div class="page-hero-stats">
+        <span class="page-hero-stat"><span class="page-hero-stat-icon">📚</span>{{ lessons|length }} уроків</span>
+        <span class="page-hero-stat"><span class="page-hero-stat-icon">⏱</span>{{ course.duration_hours }} год</span>
+        <span class="page-hero-stat"><span class="page-hero-stat-icon">📊</span>{{ course.level }}</span>
+        {% if rating_count %}<span class="page-hero-stat">⭐ {{ avg_rating }} ({{ rating_count }})</span>{% endif %}
+      </div>
+      <div class="page-hero-actions">
+        <div class="rating-widget" data-target="course" data-id="{{ course.id }}">
+          <div class="rating-stars" aria-label="Оцінити курс">
+            {% for i in "12345" %}<span data-star="{{ forloop.counter }}" role="button" tabindex="0">★</span>{% endfor %}
+          </div>
+          <span class="rating-text">{% if rating_count %}{{ avg_rating }} ({{ rating_count }}){% else %}Оцінити{% endif %}</span>
+        </div>
+        {% if lessons %}
+        {% if placement_quiz %}
+        <a href="{% url 'placement_take' course_slug=course.slug %}" class="btn btn-primary btn-hero-cta">Пройти вступний тест</a>
+        <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lessons.0.slug %}" class="btn btn-secondary">Почати з 1-го уроку</a>
+        {% else %}
+        <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lessons.0.slug %}" class="btn btn-primary btn-hero-cta">Почати перший урок</a>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section course-tabs-section">
+  <div class="container">
+    <div class="course-tabs reveal">
+      <button type="button" class="course-tab active" data-tab="material">Матеріал</button>
+      <button type="button" class="course-tab" data-tab="tasks">Завдання</button>
+      <button type="button" class="course-tab" data-tab="tests">Тести</button>
+    </div>
+
+    <div id="tab-material" class="course-tab-panel active reveal">
+      <h2 class="section-title">Уроки</h2>
+      <ul class="lessons-list">
+        {% for lesson in lessons %}
+        <li class="lesson-item {% if lesson.id in completed_lesson_ids %}lesson-item--done{% endif %}">
+          <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}">
+            <span class="lesson-num">{% if lesson.id in completed_lesson_ids %}✓{% else %}{{ forloop.counter }}{% endif %}</span>
+            <h3>{{ lesson.title }}</h3>
+            <span class="lesson-duration">{{ lesson.duration_minutes }} хв</span>
+            {% if lesson.id in completed_lesson_ids %}<span class="lesson-done-badge">Пройдено</span>{% endif %}
+          </a>
+        </li>
+        {% empty %}
+        <li class="lesson-item empty-state">
+          <p class="empty-state-text">У цьому курсі поки немає уроків.</p>
+          <a href="{% url 'home' %}" class="btn btn-secondary">На головну</a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if lessons %}
+      <div class="curriculum-cta">
+        {% if placement_quiz %}
+        <a href="{% url 'placement_take' course_slug=course.slug %}" class="btn btn-primary">Пройти вступний тест (визначити рівень)</a>
+        <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lessons.0.slug %}" class="btn btn-secondary">Почати з 1-го уроку</a>
+        {% else %}
+        <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lessons.0.slug %}" class="btn btn-primary">Почати з першого уроку</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div id="tab-tasks" class="course-tab-panel reveal">
+      <h2 class="section-title">Завдання з кодом</h2>
+      {% for item in exercises_by_lesson %}
+      <div class="tasks-block">
+        <h3 class="tasks-lesson-title">{{ item.lesson.title }}</h3>
+        <ul class="lessons-list">
+          {% for ex in item.exercises %}
+          <li class="lesson-item">
+            <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=item.lesson.slug %}#exercise-{{ ex.id }}">
+              <span class="lesson-num">⌨️</span>
+              <h3>{{ ex.title }}</h3>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% empty %}
+      <p class="text-muted">Завдань поки немає. Вони з’являться в уроках.</p>
+      {% endfor %}
+    </div>
+
+    <div id="tab-tests" class="course-tab-panel reveal">
+      <h2 class="section-title">Тести</h2>
+      <ul class="lessons-list">
+        {% for quiz in quizzes %}
+        <li class="lesson-item">
+          <a href="{% url 'quiz_take' quiz_id=quiz.id %}">
+            <span class="lesson-num">📝</span>
+            <h3>{{ quiz.title }}</h3>
+            <span class="lesson-duration">{{ quiz.get_quiz_type_display }} · {{ quiz.question_count }} питань</span>
+          </a>
+        </li>
+        {% empty %}
+        <li class="lesson-item empty-state">
+          <p class="empty-state-text">Тестів у цьому курсі поки немає.</p>
+          <a href="{% url 'course_detail' slug=course.slug %}" class="btn btn-secondary">До курсу</a>
+        </li>
+        {% endfor %}
+      </ul>
+      <a href="{% url 'quiz_list_course' course_slug=course.slug %}" class="btn btn-secondary">Усі тести курсу</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  document.querySelectorAll('.course-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var tab = this.getAttribute('data-tab');
+      document.querySelectorAll('.course-tab').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.course-tab-panel').forEach(function(p){ p.classList.remove('active'); });
+      this.classList.add('active');
+      var panel = document.getElementById('tab-' + tab);
+      if(panel) panel.classList.add('active');
+    });
+  });
+})();
+</script>
+{% endblock %}

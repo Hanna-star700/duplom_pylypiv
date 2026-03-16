@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Лідерборд — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>Лідерборд</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="leaderboard-table reveal">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Гравець</th>
+            <th>Ліга</th>
+            <th>Бали</th>
+            <th>Вогник</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in leaderboard %}
+          <tr>
+            <td class="rank">{{ forloop.counter }}</td>
+            <td>
+              {% if p.user %}
+                {{ p.user.username }}
+              {% else %}
+                Учень #{{ p.session_key|slice:":8" }}
+              {% endif %}
+            </td>
+            <td>{% if p.league %}{{ p.league.icon }} {{ p.league.name }}{% else %}—{% endif %}</td>
+            <td class="points">{{ p.points }}</td>
+            <td>🔥 {{ p.streak_days }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5">Поки ніхто не заробив балів. Стань першим!</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="section-header" style="margin-top: 48px;">
+      <a href="{% url 'dashboard' %}" class="btn btn-primary">Мій профіль</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Досягнення — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>Досягнення</h1>
+    <p class="page-hero-stats" style="margin-top: 12px;">
+      <span>Розблоковано: <strong>{{ earned_ids|length }}</strong> з <strong>{{ all_achievements|length }}</strong></span>
+      <span>·</span>
+      <span>Пройдено тестів: <strong>{{ quizzes_passed }}</strong></span>
+      <span>·</span>
+      <span>Уроків: <strong>{{ completed_lessons }}</strong></span>
+    </p>
+  </div>
+</section>
+
+<section class="section achievements-section">
+  <div class="container">
+    <div class="achievements-page-grid">
+      {% for ach in all_achievements %}
+      <div class="achievement-card {% if ach.id in earned_ids %}achievement-card--unlocked{% else %}achievement-card--locked{% endif %}">
+        <div class="achievement-card-icon-wrap">
+          {% if ach.id in earned_ids %}
+          <span class="achievement-card-icon">{{ ach.icon }}</span>
+          {% else %}
+          <span class="achievement-card-icon achievement-card-icon--locked" title="Ще не розблоковано">🔒</span>
+          {% endif %}
+        </div>
+        <h3 class="achievement-card-title">{{ ach.name }}</h3>
+        <p class="achievement-card-desc">
+          {% if ach.id in earned_ids %}
+          {{ ach.description }}
+          {% if ach.points_reward %}<span class="achievement-reward">+{{ ach.points_reward }} балів</span>{% endif %}
+          {% else %}
+          {{ ach.description }}
+          {% endif %}
+        </p>
+        {% if not ach.id in earned_ids %}
+        <p class="achievement-card-condition">
+          {% if ach.condition_type == 'first_lesson' %}Заверши будь-який урок{% endif %}
+          {% if ach.condition_type == 'first_quiz' %}Пройди будь-який тест{% endif %}
+          {% if ach.condition_type == 'quiz_perfect' %}Пройди тест на 100%{% endif %}
+          {% if ach.condition_type == 'quizzes_10' %}Пройди 10 тестів (зараз {{ quizzes_passed }}){% endif %}
+          {% if ach.condition_type == 'quizzes_50' %}Пройди 50 тестів (зараз {{ quizzes_passed }}){% endif %}
+          {% if ach.condition_type == 'quizzes_100' %}Пройди 100 тестів (зараз {{ quizzes_passed }}){% endif %}
+          {% if ach.condition_type == 'lessons_5' %}Заверши 5 уроків (зараз {{ completed_lessons }}){% endif %}
+          {% if ach.condition_type == 'lessons_10' %}Заверши 10 уроків (зараз {{ completed_lessons }}){% endif %}
+          {% if ach.condition_type == 'streak_3' %}Вогник 3 дні поспіль (зараз {{ profile.streak_days }}){% endif %}
+          {% if ach.condition_type == 'streak_7' %}Вогник 7 днів поспіль (зараз {{ profile.streak_days }}){% endif %}
+          {% if ach.condition_type == 'points_100' %}Набери 100 балів (зараз {{ profile.points }}){% endif %}
+          {% if ach.condition_type == 'points_500' %}Набери 500 балів (зараз {{ profile.points }}){% endif %}
+        </p>
+        {% endif %}
+      </div>
+      {% empty %}
+      <p class="text-muted">Досягнень поки немає. Запусти <code>python manage.py load_gamification</code>.</p>
+      {% endfor %}
+    </div>
+    <div class="achievements-actions">
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary">Профіль</a>
+      <a href="{% url 'course_list' %}" class="btn btn-primary">Мої курси</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

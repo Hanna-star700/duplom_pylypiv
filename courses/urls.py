@@ -1,0 +1,35 @@
+from django.urls import path
+from django.contrib.auth.views import LoginView, LogoutView
+from . import views
+
+urlpatterns = [
+    path('sitemap.xml', views.sitemap_view, name='sitemap'),
+    path('robots.txt', views.robots_txt_view, name='robots_txt'),
+    path('', views.home, name='home'),
+    path('register/', views.register_view, name='register'),
+    path('login/', LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
+    path('courses/', views.course_list, name='course_list'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('profile/edit/', views.profile_edit, name='profile_edit'),
+    path('achievements/', views.achievements_list, name='achievements_list'),
+    path('leaderboard/', views.leaderboard, name='leaderboard'),
+    path('competitions/', views.competition_list, name='competition_list'),
+    path('competition/<slug:slug>/', views.competition_detail, name='competition_detail'),
+    path('course/<slug:slug>/', views.course_detail, name='course_detail'),
+    path('course/<slug:course_slug>/placement/', views.placement_redirect, name='placement_take'),
+    path('course/<slug:course_slug>/lesson/<slug:lesson_slug>/', views.lesson_detail, name='lesson_detail'),
+    path('course/<slug:course_slug>/lesson/<slug:lesson_slug>/generate-content/', views.lesson_generate_content, name='lesson_generate_content'),
+    path('course/<slug:course_slug>/lesson/<slug:lesson_slug>/practice/', views.lesson_practice, name='lesson_practice'),
+    path('course/<slug:course_slug>/lesson/<slug:lesson_slug>/podcast/', views.lesson_podcast, name='lesson_podcast'),
+    path('course/<slug:course_slug>/lesson/<slug:lesson_slug>/podcast/api/', views.lesson_podcast_api, name='lesson_podcast_api'),
+    path('course/<slug:course_slug>/lesson/<slug:lesson_slug>/quiz-ai/<str:question_type>/', views.lesson_quiz_ai, name='lesson_quiz_ai'),
+    path('course/<slug:course_slug>/lesson/<slug:lesson_slug>/quiz-ai/<str:question_type>/submit/', views.lesson_quiz_ai_submit, name='lesson_quiz_ai_submit'),
+    path('course/<slug:course_slug>/lesson/<slug:lesson_slug>/complete/', views.lesson_complete, name='lesson_complete'),
+    path('quizzes/', views.quiz_list, name='quiz_list'),
+    path('course/<slug:course_slug>/quizzes/', views.quiz_list, name='quiz_list_course'),
+    path('quiz/<int:quiz_id>/', views.quiz_take, name='quiz_take'),
+    path('quiz/<int:quiz_id>/submit/', views.quiz_submit, name='quiz_submit'),
+    path('api/rate/', views.rate, name='rate'),
+    path('api/run/', views.exercise_run, name='exercise_run'),
+]

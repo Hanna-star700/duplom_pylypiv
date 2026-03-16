@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Тест від ШІ: {{ lesson.title }} — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="{% url 'home' %}">Головна</a> →
+      <a href="{% url 'course_detail' slug=course.slug %}">{{ course.title }}</a> →
+      <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}">{{ lesson.title }}</a> →
+      <span>Тест від ШІ</span>
+    </nav>
+    <h1>Тест по темі «{{ lesson.title }}»</h1>
+    <p class="page-hero-desc">{% if question_type == 'true_false' %}Обери «Правда» або «Брехня» для кожного твердження.{% else %}Питання згенеровані штучним інтелектом. Після відправки ШІ оцінить відповіді.{% endif %}</p>
+  </div>
+</section>
+
+<section class="section ai-quiz-section">
+  <div class="container container--narrow">
+    <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}" class="lesson-back lesson-back-circle" aria-label="Назад до уроку"><span class="lesson-back-arrow" aria-hidden="true">←</span></a>
+    {% if error %}
+    <div class="ai-practice-alert" role="alert">{{ error }}</div>
+    <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}" class="btn btn-secondary">← Назад до уроку</a>
+    {% else %}
+    <div id="ai-quiz-form-wrap" class="ai-quiz-form-wrap">
+      <form id="ai-quiz-form" class="quiz-form">
+        {% csrf_token %}
+        <input type="hidden" name="question_type" value="{{ question_type }}">
+        {% if question_type == 'true_false' %}
+          {% for q in questions %}
+          <div class="quiz-question astra-tf-card" data-index="{{ forloop.counter0 }}">
+            <span class="astra-tf-num">{{ forloop.counter }} / {{ questions|length }}</span>
+            <p class="astra-tf-statement">{{ q.text }}</p>
+            <div class="astra-tf-buttons">
+              <button type="button" class="astra-tf-btn astra-tf-btn--true" data-q="{{ forloop.counter0 }}" data-value="true">Правда</button>
+              <button type="button" class="astra-tf-btn astra-tf-btn--false" data-q="{{ forloop.counter0 }}" data-value="false">Брехня</button>
+            </div>
+            <input type="hidden" name="q{{ forloop.counter0 }}" id="q{{ forloop.counter0 }}" value="">
+          </div>
+          {% endfor %}
+        {% elif question_type == 'single_choice' %}
+          {% for q in questions %}
+          <div class="quiz-question" data-index="{{ forloop.counter0 }}">
+            <div class="quiz-q-header">
+              <span class="quiz-q-num">{{ forloop.counter }}</span>
+              <p class="quiz-q-text">{{ q.text }}</p>
+            </div>
+            <div class="quiz-options quiz-options-single">
+              {% for opt in q.options %}
+              <label class="quiz-option">
+                <input type="radio" name="q{{ forloop.parentloop.counter0 }}" value="{{ forloop.counter0 }}">
+                <span>{{ opt }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        {% elif question_type == 'match_pairs' %}
+          {% for q in questions %}
+            {% for pair in q.pairs %}
+            <div class="quiz-question quiz-match-row" data-index="{{ forloop.counter0 }}">
+              <span class="quiz-match-left">{{ pair.0 }}</span>
+              <span class="quiz-match-arrow">→</span>
+              <select name="q{{ forloop.counter0 }}" class="quiz-match-select" data-left="{{ pair.0 }}">
+                <option value="">— обери —</option>
+                {% for p in q.pairs %}
+                <option value="{{ p.1 }}">{{ p.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endfor %}
+          {% endfor %}
+        {% endif %}
+        <div class="quiz-submit-wrap">
+          <button type="button" id="ai-quiz-submit" class="btn btn-primary btn-lg" aria-label="Надіслати відповіді та перевірити тест">Перевірити відповіді</button>
+        </div>
+      </form>
+    </div>
+    <div id="ai-quiz-result" class="ai-result-screen" style="display: none;">
+      <div class="ai-result-progress-wrap">
+        <div class="ai-result-progress">
+          <div class="ai-result-progress-bar" id="ai-quiz-progress-bar" style="width: 0%;"></div>
+        </div>
+        <span class="ai-result-progress-label" id="ai-quiz-progress-label">0/10</span>
+      </div>
+      <p class="ai-result-points-added" id="ai-quiz-points-added" style="display: none; margin-bottom: 16px; font-weight: 600; color: var(--success);"></p>
+      <div id="ai-quiz-new-achievements" class="achievement-toast-wrap" style="display: none; margin-bottom: 20px;"></div>
+      <div class="ai-result-celebration">
+        <span class="ai-result-emoji">👍</span>
+        <h2 class="ai-result-title" id="ai-quiz-title">Браво!</h2>
+        <p class="ai-result-mastery" id="ai-quiz-mastery"></p>
+      </div>
+      <div class="result-achievement" id="ai-quiz-achievement">
+        <span class="result-achievement-icon" id="ai-quiz-achievement-icon">🔥</span>
+        <span class="result-achievement-title" id="ai-quiz-achievement-title"></span>
+        <span class="result-achievement-desc" id="ai-quiz-achievement-desc"></span>
+      </div>
+      <div class="ai-result-cards">
+        <div class="ai-result-card">
+          <span class="ai-result-card-label">Результат</span>
+          <span class="ai-result-card-value ai-result-card-value--green" id="ai-quiz-card-result">0/10</span>
+          <span class="ai-result-card-sublabel">балів з 10</span>
+        </div>
+        <div class="ai-result-card">
+          <span class="ai-result-card-label">Точність</span>
+          <div class="ai-result-circle-wrap">
+            <svg class="ai-result-circle" viewBox="0 0 36 36">
+              <path class="ai-result-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <path class="ai-result-circle-fill" id="ai-quiz-circle-fill" pathLength="100" stroke-dasharray="0 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            </svg>
+            <span class="ai-result-circle-text" id="ai-quiz-circle-value">0%</span>
+          </div>
+        </div>
+        <div class="ai-result-card">
+          <span class="ai-result-card-label">Витрачений час</span>
+          <span class="ai-result-card-value" id="ai-quiz-card-time">—</span>
+          <span class="ai-result-card-sublabel" id="ai-quiz-card-time-sublabel"></span>
+        </div>
+      </div>
+      <div class="ai-result-tutor" id="ai-quiz-tutor-wrap" style="display: none;">
+        <div class="ai-result-tutor-header">
+          <span class="ai-result-tutor-icon">📈</span>
+          <span class="ai-result-tutor-title">Відгук від вашого репетитора</span>
+          <button type="button" class="ai-result-tutor-toggle" id="ai-quiz-tutor-toggle" aria-expanded="false" aria-controls="ai-quiz-tutor-feedback">Відкрити</button>
+        </div>
+        <div class="ai-result-tutor-body" id="ai-quiz-tutor-feedback" hidden>
+          <pre class="ai-practice-feedback" id="ai-quiz-feedback"></pre>
+        </div>
+      </div>
+      <div class="ai-result-actions">
+        <a href="{% url 'lesson_quiz_ai' course_slug=course.slug lesson_slug=lesson.slug question_type=question_type %}" class="btn btn-secondary">🔄 Повторити</a>
+        <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}" class="btn btn-primary">Наступний урок →</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% if not error %}
+<script>
+(function() {
+  window.aiQuizStartTime = Date.now();
+  var form = document.getElementById('ai-quiz-form');
+  var submitBtn = document.getElementById('ai-quiz-submit');
+  var formWrap = document.getElementById('ai-quiz-form-wrap');
+  var resultEl = document.getElementById('ai-quiz-result');
+  var questionType = "{{ question_type }}";
+  var submitUrl = "{% url 'lesson_quiz_ai_submit' course_slug=course.slug lesson_slug=lesson.slug question_type=question_type %}";
+  var csrf = form.querySelector('input[name=csrfmiddlewaretoken]').value;
+
+  function collectAnswers() {
+    var answers = [];
+    if (questionType === 'true_false') {
+      form.querySelectorAll('.astra-tf-card').forEach(function(block) {
+        var idx = parseInt(block.getAttribute('data-index'), 10);
+        var hid = block.querySelector('input[type="hidden"][name="q' + idx + '"]');
+        var val = hid && hid.value ? hid.value : null;
+        answers.push(val);
+      });
+    } else if (questionType === 'single_choice') {
+      form.querySelectorAll('.quiz-question[data-index]').forEach(function(block) {
+        var idx = parseInt(block.getAttribute('data-index'), 10);
+        var name = 'q' + idx;
+        var r = block.querySelector('input[name="' + name + '"]:checked');
+        var val = r ? r.value : null;
+        val = val !== null ? parseInt(val, 10) : null;
+        answers.push(val);
+      });
+    } else if (questionType === 'match_pairs') {
+      form.querySelectorAll('.quiz-match-row').forEach(function(row) {
+        var left = (row.querySelector('.quiz-match-left') || {}).textContent.trim();
+        var sel = row.querySelector('select');
+        var right = sel ? sel.value : '';
+        answers.push([left, right]);
+      });
+    }
+    return answers;
+  }
+
+  if (questionType === 'true_false') {
+    form.querySelectorAll('.astra-tf-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var q = btn.getAttribute('data-q');
+        var val = btn.getAttribute('data-value');
+        var card = btn.closest('.astra-tf-card');
+        card.querySelectorAll('.astra-tf-btn').forEach(function(b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        var hid = document.getElementById('q' + q);
+        if (hid) hid.value = val;
+      });
+    });
+  }
+
+  if (submitBtn && form) {
+    submitBtn.addEventListener('click', function() {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Перевірка...';
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', submitUrl);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('X-CSRFToken', csrf);
+      xhr.onload = function() {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Перевірити відповіді';
+        if (xhr.status !== 200) {
+          alert('Помилка сервера.');
+          return;
+        }
+        try {
+          var res = JSON.parse(xhr.responseText);
+          if (res.ok) {
+            if (formWrap) formWrap.style.display = 'none';
+            if (resultEl) {
+              resultEl.style.display = 'block';
+              resultEl.style.visibility = 'visible';
+              resultEl.style.opacity = '1';
+              resultEl.classList.add('quiz-result-visible');
+            }
+            var total = parseInt(res.total, 10) || 0;
+            var correct = parseInt(res.correct_count, 10) || 0;
+            var percent = total ? Math.round(100 * correct / total) : 0;
+            var score = parseInt(res.score, 10);
+            if (isNaN(score) || score < 1 || score > 10) score = total ? Math.min(10, Math.max(1, Math.round((correct / total) * 10))) : 5;
+            var progressBar = document.getElementById('ai-quiz-progress-bar');
+            var progressLabel = document.getElementById('ai-quiz-progress-label');
+            if (progressBar) progressBar.style.width = score * 10 + '%';
+            if (progressLabel) progressLabel.textContent = score + '/10';
+            var pointsEl = document.getElementById('ai-quiz-points-added');
+            var pts = res.points_added != null ? parseInt(res.points_added, 10) : 0;
+            if (pointsEl && pts > 0) { pointsEl.textContent = '⭐ +' + pts + ' балів нараховано'; pointsEl.style.display = 'block'; } else if (pointsEl) pointsEl.style.display = 'none';
+            var titleEl = document.getElementById('ai-quiz-title');
+            if (titleEl) titleEl.textContent = score >= 7 ? 'Браво!' : 'Можна краще!';
+            var masteryEl = document.getElementById('ai-quiz-mastery');
+            if (masteryEl) masteryEl.textContent = (score >= 7 ? 'Майстерність +' : 'Майстерність ') + score + '0%';
+            var icons = {10:'🏆',9:'🥇',7:'🔥',5:'💪',3:'🐢',1:'😅'};
+            var titles = {10:'«10/10 — Легенда коду!»',9:'«Майже ідеально»',7:'«Майже як у Ворлд оф Тенкс — топ»',5:'«Середнячок — але вперед!»',3:'«Помалу, але рухаємось»',1:'«1 бал — це тільки початок!»'};
+            var descs = {10:'Ідеальний результат. Вітаємо!',9:'Чудово, ще трохи — і десятка.',7:'Хороший результат, так тримати.',5:'Є куди рости, але основа вже є.',3:'Практика робить майстра.',1:'Не здавайся — спробуй ще раз!'};
+            var s = score >= 10 ? 10 : score >= 9 ? 9 : score >= 7 ? 7 : score >= 5 ? 5 : score >= 3 ? 3 : score >= 1 ? 1 : 1;
+            var achievement = document.getElementById('ai-quiz-achievement');
+            if (achievement) achievement.className = 'result-achievement result-achievement--score-' + Math.min(10, score);
+            var aiIcon = document.getElementById('ai-quiz-achievement-icon');
+            if (aiIcon) aiIcon.textContent = icons[s] || '🙂';
+            var aiTitle = document.getElementById('ai-quiz-achievement-title');
+            if (aiTitle) aiTitle.textContent = titles[s] || '«Наступного разу буде краще!»';
+            var aiDesc = document.getElementById('ai-quiz-achievement-desc');
+            if (aiDesc) aiDesc.textContent = descs[s] || 'Ти на правильному шляху.';
+            var cardResult = document.getElementById('ai-quiz-card-result');
+            if (cardResult) cardResult.textContent = score + '/10';
+            var circleFill = document.getElementById('ai-quiz-circle-fill');
+            var circleValue = document.getElementById('ai-quiz-circle-value');
+            if (circleFill) circleFill.setAttribute('stroke-dasharray', (score * 10) + ' 100');
+            if (circleValue) circleValue.textContent = score + '0%';
+            var cardTime = document.getElementById('ai-quiz-card-time');
+            var mins = res.time_spent_minutes;
+            if (mins == null && typeof window.aiQuizStartTime === 'number')
+              mins = Math.max(0, Math.round((Date.now() - window.aiQuizStartTime) / 60000));
+            if (cardTime) {
+              if (mins != null && mins >= 0) {
+                if (mins === 0) cardTime.textContent = 'менше 1 хв';
+                else if (mins === 1) cardTime.textContent = '1 хвилина';
+                else cardTime.textContent = mins + ' хв';
+              } else cardTime.textContent = '—';
+            }
+            var tutorWrap = document.getElementById('ai-quiz-tutor-wrap');
+            var feedbackEl = document.getElementById('ai-quiz-feedback');
+            var tutorToggle = document.getElementById('ai-quiz-tutor-toggle');
+            var hasFeedback = (res.feedback || '').trim().length > 0;
+            if (hasFeedback && tutorWrap && feedbackEl) {
+              tutorWrap.style.display = 'block';
+              feedbackEl.textContent = res.feedback.trim();
+              feedbackEl.parentElement.hidden = true;
+              if (tutorToggle) {
+                tutorToggle.textContent = 'Відкрити';
+                tutorToggle.onclick = function() {
+                  var open = feedbackEl.parentElement.hidden;
+                  feedbackEl.parentElement.hidden = !open;
+                  tutorToggle.textContent = open ? 'Згорнути' : 'Відкрити';
+                  tutorToggle.classList.toggle('is-open', open);
+                };
+              }
+            } else if (tutorWrap) tutorWrap.style.display = 'none';
+            var newAchWrap = document.getElementById('ai-quiz-new-achievements');
+            if (newAchWrap && res.new_achievements && res.new_achievements.length > 0) {
+              newAchWrap.innerHTML = '';
+              res.new_achievements.forEach(function(a) {
+                var p = document.createElement('p');
+                p.className = 'achievement-toast';
+                p.innerHTML = '<span class="achievement-toast-icon">' + (a.icon || '🏆') + '</span> <strong>Ви отримали досягнення:</strong> ' + (a.name || '') + (a.description ? ' — ' + a.description : '');
+                newAchWrap.appendChild(p);
+              });
+              newAchWrap.style.display = 'block';
+            } else if (newAchWrap) newAchWrap.style.display = 'none';
+            if (resultEl && resultEl.scrollIntoView) resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else {
+            alert(res.message || 'Помилка.');
+          }
+        } catch (e) {
+          console.error(e);
+          alert('Помилка відповіді. Перевірте консоль.');
+        }
+      };
+      xhr.onerror = function() {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Перевірити відповіді';
+        alert('Помилка мережі.');
+      };
+      var payload = { answers: collectAnswers() };
+      if (typeof window.aiQuizStartTime === 'number')
+        payload.time_spent_minutes = Math.max(0, Math.round((Date.now() - window.aiQuizStartTime) / 60000));
+      xhr.send(JSON.stringify(payload));
+    });
+  }
+})();
+</script>
+{% endif %}
+{% endblock %}

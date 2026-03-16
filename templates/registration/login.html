@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Увійти — LearnCode{% endblock %}
+
+{% block content %}
+<div class="auth-split">
+  <div class="auth-split-left">
+    <div class="auth-split-bg" style="background-image: url('{% static 'img/register-programming.svg' %}');"></div>
+    <div class="auth-split-overlay"></div>
+    <a href="{% url 'home' %}" class="auth-back-link">← На головну</a>
+    <div class="auth-split-brand">
+      <span class="auth-split-logo">LearnCode</span>
+    </div>
+    <p class="auth-split-slogan">Продовжуй навчання та збирай бали.</p>
+  </div>
+
+  <div class="auth-split-right">
+    <div class="auth-split-form-wrap">
+      <h1 class="auth-split-title">Увійти в обліковий запис</h1>
+      <p class="auth-split-sub">Ще немає облікового запису? <a href="{% url 'register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Зареєструйся</a></p>
+
+      <form method="post" class="auth-split-form" action="{% url 'login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% if form.non_field_errors %}
+        <div class="auth-form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="auth-split-fields">
+          <div class="auth-field">
+            <label for="id_username">Логін</label>
+            <input type="text" name="username" id="id_username" required autofocus
+                   value="{{ form.username.value|default:'' }}"
+                   class="auth-input" placeholder="Логін"
+                   autocomplete="username">
+            {% if form.username.errors %}<span class="auth-field-error">{{ form.username.errors.0 }}</span>{% endif %}
+          </div>
+          <div class="auth-field auth-field-password">
+            <label for="id_password">Пароль</label>
+            <div class="auth-password-wrap">
+              <input type="password" name="password" id="id_password" required
+                     class="auth-input" placeholder="Пароль"
+                     autocomplete="current-password">
+              <button type="button" class="auth-password-toggle" aria-label="Показати пароль">
+                <svg class="auth-eye" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="auth-eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+            {% if form.password.errors %}<span class="auth-field-error">{{ form.password.errors.0 }}</span>{% endif %}
+          </div>
+        </div>
+
+        <button type="submit" class="auth-split-btn">Увійти</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  var wrap = document.querySelector('.auth-password-wrap');
+  if (wrap) {
+    var input = wrap.querySelector('input');
+    var btn = wrap.querySelector('.auth-password-toggle');
+    var eye = wrap.querySelector('.auth-eye');
+    var eyeOff = wrap.querySelector('.auth-eye-off');
+    if (btn && input) {
+      btn.addEventListener('click', function(){
+        var isPass = input.type === 'password';
+        input.type = isPass ? 'text' : 'password';
+        if (eye) eye.style.display = isPass ? 'none' : 'block';
+        if (eyeOff) eyeOff.style.display = isPass ? 'block' : 'none';
+      });
+    }
+  }
+})();
+</script>
+{% endblock %}

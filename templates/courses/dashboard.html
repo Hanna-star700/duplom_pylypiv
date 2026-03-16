@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Профіль — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>Твій профіль</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="profile-header reveal">
+      <div class="profile-header-avatar">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="" class="profile-avatar-img">
+        {% else %}
+          <div class="profile-avatar-placeholder" aria-hidden="true">{% firstof user.first_name|slice:":1" user.username|slice:":1" "?" as letter %}{{ letter|upper }}</div>
+        {% endif %}
+      </div>
+      <div class="profile-header-info">
+        <h2 class="profile-header-name">{% firstof user.get_full_name user.username %}</h2>
+        {% if user.email %}<p class="profile-header-email">{{ user.email }}</p>{% endif %}
+        <a href="{% url 'profile_edit' %}" class="btn btn-ghost btn-sm">Редагувати профіль</a>
+      </div>
+    </div>
+    <div class="dashboard-grid">
+      <div class="dashboard-card stats-card reveal">
+        <h2 class="dashboard-card-title">Статистика</h2>
+        <div class="stat-row">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-value">{{ profile.points }}</span>
+          <span class="stat-label">Бали</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-icon">🔥</span>
+          <span class="stat-value">{{ profile.streak_days }}</span>
+          <span class="stat-label">Вогник (дні поспіль)</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-icon">📚</span>
+          <span class="stat-value">{{ completed_lessons }}</span>
+          <span class="stat-label">Завершено уроків</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-icon">📝</span>
+          <span class="stat-value">{{ quizzes_passed }}</span>
+          <span class="stat-label">Пройдено тестів</span>
+        </div>
+        {% if profile.league %}
+        <div class="stat-row league-row">
+          <span class="stat-icon">{{ profile.league.icon }}</span>
+          <span class="stat-value" style="color: {{ profile.league.color }}">{{ profile.league.name }}</span>
+          <span class="stat-label">Ліга</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="dashboard-card weekly-card reveal reveal-delay-1">
+        <h2 class="dashboard-card-title">Час навчання за тиждень</h2>
+        <p class="dashboard-desc">Скільки часу присвячено навчанню по днях (як у Duolingo).</p>
+        <ul class="weekly-study-list">
+          {% for day_name, minutes in weekly_study %}
+          <li class="weekly-study-item">
+            <span class="weekly-study-day">{{ day_name }}</span>
+            <span class="weekly-study-min">{{ minutes }} хв</span>
+          </li>
+          {% empty %}
+          <li class="weekly-study-item weekly-study-item--empty">Ще немає даних за тиждень</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="dashboard-card leagues-card reveal reveal-delay-2">
+        <h2 class="dashboard-card-title">Ліги</h2>
+        <p class="dashboard-desc">Чим більше вчишся — тим вища ліга.</p>
+        <ul class="leagues-list">
+          {% for league in leagues %}
+          <li class="league-item {% if profile.league_id == league.id %}active{% endif %}">
+            <span class="league-icon">{{ league.icon }}</span>
+            <span class="league-name">{{ league.name }}</span>
+            <span class="league-min">від {{ league.min_points }} балів</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="dashboard-actions reveal">
+      <a href="{% url 'course_list' %}" class="btn btn-primary">Мої курси</a>
+      <a href="{% url 'achievements_list' %}" class="btn btn-secondary">Досягнення</a>
+      <a href="{% url 'leaderboard' %}" class="btn btn-secondary">Лідерборд</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

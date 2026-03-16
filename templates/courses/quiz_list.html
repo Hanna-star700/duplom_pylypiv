@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Тести — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>Тести</h1>
+  </div>
+</section>
+
+<section class="lessons-section">
+  <div class="container">
+    <ul class="lessons-list">
+      {% for quiz in quizzes %}
+      <li class="lesson-item reveal">
+        <a href="{% url 'quiz_take' quiz_id=quiz.id %}">
+          <span class="lesson-num">📝</span>
+          <h3>{{ quiz.title }}</h3>
+          <span class="lesson-duration">{{ quiz.get_quiz_type_display }} · {{ quiz.question_count }} питань · {% if quiz.is_practice %}тренувальний{% else %}на оцінку{% endif %}</span>
+        </a>
+      </li>
+      {% empty %}
+      <li class="lesson-item">
+        <p style="margin: 0; padding: 24px; color: var(--text-secondary);">Тестів поки немає.</p>
+      </li>
+      {% endfor %}
+    </ul>
+    {% if course %}
+    <div class="curriculum-cta">
+      <a href="{% url 'course_detail' slug=course.slug %}" class="btn btn-secondary">Назад до курсу</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ competition.name }} — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>{{ competition.name }}</h1>
+    <p class="page-hero-desc">{{ competition.description|default:"" }}</p>
+    <div class="page-hero-stats">
+      <span>Початок: {{ competition.start_at|date:"d.m.Y H:i" }}</span>
+      <span>Кінець: {{ competition.end_at|date:"d.m.Y H:i" }}</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">Топ учасників</h2>
+    <div class="leaderboard-table reveal">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Гравець</th>
+            <th>Ліга</th>
+            <th>Бали</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in leaderboard %}
+          <tr>
+            <td class="rank">{{ forloop.counter }}</td>
+            <td>{% if p.user %}{{ p.user.username }}{% else %}Учень #{{ p.session_key|slice:":8" }}{% endif %}</td>
+            <td>{% if p.league %}{{ p.league.icon }} {{ p.league.name }}{% else %}—{% endif %}</td>
+            <td class="points">{{ p.points }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4">Поки немає учасників.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

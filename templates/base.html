@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}LearnCode — Python та JavaScript{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Безкоштовна платформа для вивчення Python та JavaScript. Покрокові уроки, тести, завдання з кодом та миттєвий запуск у браузері.{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{% block og_title %}LearnCode — Python та JavaScript{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Безкоштовна платформа для вивчення Python та JavaScript. Покрокові уроки, тести, завдання з кодом.{% endblock %}">
+  <meta property="og:locale" content="uk_UA">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <script>
+    (function(){
+      var t = localStorage.getItem('learncode-theme');
+      if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    })();
+  </script>
+</head>
+<body>
+  <header class="site-header" id="site-header">
+    <div class="container header-inner">
+      <a href="{% url 'home' %}" class="logo">
+        <span class="logo-icon">◇</span>
+        <span class="logo-text">LearnCode</span>
+      </a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Меню" aria-expanded="false">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav" id="nav">
+        <a href="{% url 'home' %}">Головна</a>
+        {% if user.is_authenticated %}
+        <span class="header-streak" title="Вогник: дні навчання поспіль">🔥 <strong>{{ user_streak }}</strong> дн.</span>
+        <span class="header-points" title="Нараховані бали">⭐ {{ user_points }}</span>
+        <a href="{% url 'course_list' %}">Мої курси</a>
+        <a href="{% url 'dashboard' %}">Профіль</a>
+        <a href="{% url 'leaderboard' %}">Лідерборд</a>
+        <a href="{% url 'achievements_list' %}">Досягнення</a>
+        <form method="post" action="{% url 'logout' %}" class="nav-logout-form">
+          {% csrf_token %}
+          <button type="submit" class="nav-logout-btn">Вийти</button>
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}">Увійти</a>
+        <a href="{% url 'register' %}">Реєстрація</a>
+        {% endif %}
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Світлий режим">
+          <span class="theme-icon theme-icon-sun" aria-hidden="true">☀</span>
+          <span class="theme-icon theme-icon-moon" aria-hidden="true">🌙</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" id="csrf-token">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="{% url 'home' %}" class="logo">
+            <span class="logo-icon">◇</span>
+            <span class="logo-text">LearnCode</span>
+          </a>
+          <p>Безкоштовна платформа для вивчення Python та JavaScript. Вчись у браузері, з реальними завданнями та миттєвим запуском коду.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Навігація</h4>
+          <ul>
+            <li><a href="{% url 'home' %}">Головна</a></li>
+            {% if user.is_authenticated %}
+            <li><a href="{% url 'course_list' %}">Мої курси</a></li>
+            <li><a href="{% url 'dashboard' %}">Профіль</a></li>
+            <li><a href="{% url 'achievements_list' %}">Досягнення</a></li>
+            {% else %}
+            <li><a href="{% url 'login' %}">Увійти</a></li>
+            <li><a href="{% url 'register' %}">Реєстрація</a></li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Курси</h4>
+          <ul>
+            {% for c in courses_list %}
+            <li><a href="{% if user.is_authenticated %}{% url 'course_detail' slug=c.slug %}{% else %}{% url 'register' %}{% endif %}">{{ c.title }}</a></li>
+            {% empty %}
+            <li><a href="{% url 'home' %}#courses">Python та JavaScript</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copy">© 2026 LearnCode. Зроблено з метою навчання.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

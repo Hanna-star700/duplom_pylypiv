@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Курси — LearnCode{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>Мої курси</h1>
+  </div>
+</section>
+<section class="section" id="courses">
+  <div class="container">
+    <div class="courses-grid">
+      {% for course in courses %}
+      <a href="{% url 'course_detail' slug=course.slug %}" class="course-card {{ course.language }} reveal">
+        <div class="course-card-icon lang-badge">{% if course.language == 'python' %}<img src="{% static 'img/python-badge.svg' %}" alt="Python" class="lang-badge-img">{% elif course.language == 'javascript' %}<img src="{% static 'img/javascript-badge.svg' %}" alt="JavaScript" class="lang-badge-img">{% else %}{{ course.icon }}{% endif %}</div>
+        <h3>{{ course.title }}</h3>
+        <div class="course-card-meta">
+          <span>{{ course.duration_hours }} год</span>
+          <span>{{ course.level }}</span>
+          <span>{{ course.lesson_count }} уроків</span>
+        </div>
+        <p>{{ course.short_description }}</p>
+        <span class="card-link">Перейти до курсу →</span>
+      </a>
+      {% empty %}
+      <p class="reveal" style="grid-column: 1/-1; color: var(--text-secondary);">Курси з'являться після додавання в адмінці.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

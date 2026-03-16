@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ lesson.title }} — {{ course.title }} — LearnCode{% endblock %}
+
+{% block content %}
+<div class="lesson-layout lesson-layout--choice" id="lesson-layout">
+  <div class="lesson-content-panel">
+    <div class="container lesson-container">
+      <div class="lesson-entry-header" id="lesson-entry-header">
+        {% if total_lessons > 0 %}
+        <p class="lesson-progress-inline" aria-label="Прогрес курсу">Пройдено {{ completed_count }} з {{ total_lessons }} уроків</p>
+        {% endif %}
+        <h1 class="lesson-title">{{ lesson.title }}</h1>
+      </div>
+      {% comment %} 3 вибори: Матеріал, Завдання, Тести (прямокутнички) {% endcomment %}
+      <div class="lesson-entry-cards lesson-entry-cards--three" id="lesson-entry-cards">
+        <button type="button" class="lesson-entry-card" data-panel="material" id="btn-material">
+          <span class="lesson-entry-card-icon">📖</span>
+          <span class="lesson-entry-card-title">Матеріал</span>
+          <span class="lesson-entry-card-desc">Читати конспект уроку</span>
+        </button>
+        <button type="button" class="lesson-entry-card" data-panel="tasks" id="btn-tasks">
+          <span class="lesson-entry-card-icon">⌨️</span>
+          <span class="lesson-entry-card-title">Завдання</span>
+          <span class="lesson-entry-card-desc">Завдання з кодом</span>
+        </button>
+        <button type="button" class="lesson-entry-card" data-panel="tests" id="btn-tests">
+          <span class="lesson-entry-card-icon">📝</span>
+          <span class="lesson-entry-card-title">Тести</span>
+          <span class="lesson-entry-card-desc">5 типів перевірки</span>
+        </button>
+      </div>
+
+      {% comment %} Панель матеріалу — тільки конспект, без посилань на тести/завдання {% endcomment %}
+      <div class="lesson-panel lesson-panel-conspect" id="panel-material" hidden>
+        <button type="button" class="lesson-back lesson-back-circle" data-back="entry" aria-label="Назад до вибору"><span class="lesson-back-arrow" aria-hidden="true">←</span></button>
+        <div class="conspect-read-area">
+          {% if user.is_authenticated and not lesson.content %}
+          <div class="conspect-generate-wrap" id="conspect-generate-wrap">
+            {% csrf_token %}
+            <p class="conspect-empty-hint">Матеріал до уроку буде додано автоматично (конспект згенерує ШІ). Якщо не з’явився — натисніть кнопку нижче.</p>
+            <button type="button" class="btn btn-primary" id="conspect-generate-btn" data-course="{{ course.slug }}" data-lesson="{{ lesson.slug }}">Згенерувати конспект ШІ</button>
+          </div>
+          <div id="conspect" class="lesson-body" style="display: none;"></div>
+          {% else %}
+          <div id="conspect" class="lesson-body">
+            {{ lesson.content|safe }}
+          </div>
+          {% endif %}
+        </div>
+        <div class="rating-widget" data-target="lesson" data-id="{{ lesson.id }}" style="margin-top: 24px; margin-bottom: 20px;">
+          <div class="rating-stars" aria-label="Оцінити урок">
+            {% for i in "12345" %}<span data-star="{{ forloop.counter }}" role="button" tabindex="0">★</span>{% endfor %}
+          </div>
+          <span class="rating-text">{% if rating_count %}{{ avg_rating }} ({{ rating_count }}){% else %}Оцінити{% endif %}</span>
+        </div>
+        <div class="lesson-complete-wrap">
+          <button type="button" class="btn btn-primary" id="lesson-complete-btn" data-course="{{ course.slug }}" data-lesson="{{ lesson.slug }}">✓ Завершити урок (+15 балів)</button>
+        </div>
+        <div class="detail-actions">
+          {% if lessons_prev %}
+          <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lessons_prev.slug %}" class="btn btn-secondary">← Попередній урок</a>
+          {% endif %}
+          <a href="{% url 'course_detail' slug=course.slug %}" class="btn btn-ghost">До курсу</a>
+          {% if lessons_next %}
+          <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lessons_next.slug %}" class="btn btn-primary">Наступний урок →</a>
+          {% endif %}
+        </div>
+      </div>
+
+      {% comment %} Тести до уроку: клік по вкладці з іконкою відкриває відповідний тест {% endcomment %}
+      <div class="lesson-panel lesson-panel-tests" id="panel-tests" hidden>
+        <button type="button" class="lesson-back lesson-back-circle" data-back="entry" aria-label="Назад до вибору"><span class="lesson-back-arrow" aria-hidden="true">←</span></button>
+        <h2 class="lesson-panel-title">Тести до уроку</h2>
+        <div class="lesson-test-tabs" role="navigation">
+          <a href="{% url 'lesson_practice' course_slug=course.slug lesson_slug=lesson.slug %}" class="lesson-test-tab">
+            <span class="lesson-test-tab-icon lesson-test-tab-icon--exercise">✎</span>
+            <span class="lesson-test-tab-label">Вправа</span>
+          </a>
+          <a href="{% url 'lesson_quiz_ai' course_slug=course.slug lesson_slug=lesson.slug question_type='single_choice' %}" class="lesson-test-tab">
+            <span class="lesson-test-tab-icon lesson-test-tab-icon--quiz">AB</span>
+            <span class="lesson-test-tab-label">Вікторина</span>
+          </a>
+          <a href="{% url 'lesson_quiz_ai' course_slug=course.slug lesson_slug=lesson.slug question_type='true_false' %}" class="lesson-test-tab">
+            <span class="lesson-test-tab-icon lesson-test-tab-icon--tf">✓✗</span>
+            <span class="lesson-test-tab-label">Правда / Брехня</span>
+          </a>
+          <a href="{% url 'lesson_quiz_ai' course_slug=course.slug lesson_slug=lesson.slug question_type='match_pairs' %}" class="lesson-test-tab">
+            <span class="lesson-test-tab-icon lesson-test-tab-icon--flash">▤▤</span>
+            <span class="lesson-test-tab-label">Флеш-картки</span>
+          </a>
+          <a href="{% url 'lesson_podcast' course_slug=course.slug lesson_slug=lesson.slug %}" class="lesson-test-tab">
+            <span class="lesson-test-tab-icon lesson-test-tab-icon--podcast">🎙</span>
+            <span class="lesson-test-tab-label">Подкаст</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="exercises-panel" id="exercises-panel" hidden>
+    <button type="button" class="lesson-back lesson-back-circle" data-back="entry" aria-label="Назад до вибору"><span class="lesson-back-arrow" aria-hidden="true">←</span></button>
+    <h2>Завдання</h2>
+    {% for ex in exercises %}
+    <div class="exercise-block" id="exercise-{{ ex.id }}" data-exercise-id="{{ ex.id }}">
+      <h3>{{ ex.title }}</h3>
+      <div class="exercise-instruction">{{ ex.instruction|linebreaks }}</div>
+      <div class="code-editor-wrap">
+        <textarea id="code-{{ ex.id }}" placeholder="Введі код тут..." data-lang="{{ course.language }}" spellcheck="false">{{ ex.starter_code }}</textarea>
+      </div>
+      <div class="output-wrap">
+        <h4>Результат виконання</h4>
+        <pre class="output-content" id="output-{{ ex.id }}" data-placeholder="Натисни «Запустити», щоб виконати код."></pre>
+      </div>
+      {% if ex.hint %}
+      <details class="exercise-hint">
+        <summary>Показати підказку</summary>
+        <p>{{ ex.hint }}</p>
+      </details>
+      {% endif %}
+      <div class="editor-actions">
+        <button type="button" class="btn btn-primary" data-run data-exercise-id="{{ ex.id }}">Запустити</button>
+      </div>
+    </div>
+    {% empty %}
+    <p style="color: var(--text-secondary);">Завдань поки немає.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/code-runner.js' %}"></script>
+<script>
+(function(){
+  var layout = document.getElementById('lesson-layout');
+  var entryCards = document.getElementById('lesson-entry-cards');
+  var panelMaterial = document.getElementById('panel-material');
+  var panelTests = document.getElementById('panel-tests');
+  var exercisesPanel = document.getElementById('exercises-panel');
+
+  function showEntry() {
+    entryCards.removeAttribute('hidden');
+    if (panelMaterial) panelMaterial.setAttribute('hidden', '');
+    panelTests.setAttribute('hidden', '');
+    exercisesPanel.setAttribute('hidden', '');
+    layout.classList.remove('lesson-layout--material', 'lesson-layout--tests', 'lesson-layout--tasks');
+  }
+  function showMaterial() {
+    entryCards.setAttribute('hidden', '');
+    if (panelMaterial) panelMaterial.removeAttribute('hidden');
+    panelTests.setAttribute('hidden', '');
+    exercisesPanel.setAttribute('hidden', '');
+    layout.classList.add('lesson-layout--material');
+    layout.classList.remove('lesson-layout--tests', 'lesson-layout--tasks');
+    var generateWrap = document.getElementById('conspect-generate-wrap');
+    if (generateWrap && generateWrap.offsetParent !== null && typeof autoGenerateConspect === 'function') {
+      autoGenerateConspect();
+    }
+  }
+  function showTasks() {
+    entryCards.setAttribute('hidden', '');
+    if (panelMaterial) panelMaterial.setAttribute('hidden', '');
+    panelTests.setAttribute('hidden', '');
+    exercisesPanel.removeAttribute('hidden');
+    layout.classList.add('lesson-layout--tasks');
+    layout.classList.remove('lesson-layout--material', 'lesson-layout--tests');
+  }
+  function showTests() {
+    entryCards.setAttribute('hidden', '');
+    if (panelMaterial) panelMaterial.setAttribute('hidden', '');
+    panelTests.removeAttribute('hidden');
+    exercisesPanel.setAttribute('hidden', '');
+    layout.classList.add('lesson-layout--tests');
+    layout.classList.remove('lesson-layout--material', 'lesson-layout--tasks');
+  }
+
+  document.getElementById('btn-material').addEventListener('click', showMaterial);
+  document.getElementById('btn-tasks').addEventListener('click', showTasks);
+  document.getElementById('btn-tests').addEventListener('click', showTests);
+  document.querySelectorAll('.lesson-back').forEach(function(btn) {
+    btn.addEventListener('click', showEntry);
+  });
+
+  var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+  var csrfToken = csrf ? csrf.value : '{{ csrf_token }}';
+  document.querySelectorAll('.rating-widget').forEach(function(widget){
+    var target = widget.getAttribute('data-target');
+    var id = widget.getAttribute('data-id');
+    var stars = widget.querySelectorAll('[data-star]');
+    var textEl = widget.querySelector('.rating-text');
+    stars.forEach(function(star){
+      star.addEventListener('click', function(){
+        var score = parseInt(star.getAttribute('data-star'), 10);
+        var body = JSON.stringify({ target: target, score: score, course_id: target==='course' ? id : null, lesson_id: target==='lesson' ? id : null });
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/rate/');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        xhr.onload = function(){
+          if (xhr.status === 200) {
+            var r = JSON.parse(xhr.responseText);
+            if (r.ok && textEl) textEl.textContent = r.avg + ' (' + r.count + ')';
+            stars.forEach(function(s){ s.classList.remove('active'); if(parseInt(s.getAttribute('data-star'),10)<=score) s.classList.add('active'); });
+          }
+        };
+        xhr.send(body);
+      });
+    });
+  });
+  function autoGenerateConspect() {
+    var btn = document.getElementById('conspect-generate-btn');
+    if (!btn) return;
+    btn.click();
+  }
+  var generateBtn = document.getElementById('conspect-generate-btn');
+  if (generateBtn) {
+    var doGenerate = function(){
+      var course = generateBtn.getAttribute('data-course');
+      var lesson = generateBtn.getAttribute('data-lesson');
+      var wrap = document.getElementById('conspect-generate-wrap');
+      var conspectEl = document.getElementById('conspect');
+      generateBtn.disabled = true;
+      generateBtn.textContent = 'Додаємо матеріал...';
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/course/' + course + '/lesson/' + lesson + '/generate-content/');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('X-CSRFToken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+      xhr.onload = function(){
+        if (xhr.status === 200) {
+          var r = JSON.parse(xhr.responseText);
+          if (r.ok && r.content) {
+            if (wrap) wrap.style.display = 'none';
+            if (conspectEl) { conspectEl.innerHTML = r.content; conspectEl.style.display = 'block'; }
+          } else {
+            alert(r.message || 'Не вдалося додати матеріал.');
+            generateBtn.disabled = false;
+            generateBtn.textContent = 'Згенерувати конспект ШІ';
+          }
+        } else {
+          generateBtn.disabled = false;
+          generateBtn.textContent = 'Згенерувати конспект ШІ';
+          alert('Помилка сервера.');
+        }
+      };
+      xhr.onerror = function(){ generateBtn.disabled = false; generateBtn.textContent = 'Згенерувати конспект ШІ'; };
+      xhr.send('{}');
+    };
+    generateBtn.addEventListener('click', doGenerate);
+  }
+  var completeBtn = document.getElementById('lesson-complete-btn');
+  if (completeBtn) {
+    completeBtn.addEventListener('click', function(){
+      var course = completeBtn.getAttribute('data-course');
+      var lesson = completeBtn.getAttribute('data-lesson');
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/course/' + course + '/lesson/' + lesson + '/complete/');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('X-CSRFToken', document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}');
+      xhr.onload = function(){ if (xhr.status === 200) { completeBtn.textContent = '✓ Урок завершено'; completeBtn.disabled = true; } };
+      xhr.send('{}');
+    });
+  }
+})();
+</script>
+{% endblock %}

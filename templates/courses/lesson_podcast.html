@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Подкаст: {{ lesson.title }} — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="{% url 'home' %}">Головна</a> →
+      <a href="{% url 'course_detail' slug=course.slug %}">{{ course.title }}</a> →
+      <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}">{{ lesson.title }}</a> →
+      <span>Подкаст</span>
+    </nav>
+    <h1>Подкаст по темі уроку</h1>
+    <p class="page-hero-desc">ШІ ставить питання по темі «{{ lesson.title }}». Ти відповідаєш — репетитор підкаже, що правильно, а що ні, і поставить наступне питання.</p>
+  </div>
+</section>
+
+<section class="section podcast-section">
+  <div class="container container--narrow">
+    <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}" class="lesson-back lesson-back-circle" aria-label="Назад до уроку"><span class="lesson-back-arrow" aria-hidden="true">←</span></a>
+    <div class="podcast-chat-wrap">
+      <div class="podcast-messages" id="podcast-messages">
+        {% if not podcast_messages %}
+        <div class="podcast-msg podcast-msg-assistant" id="podcast-welcome">
+          <span class="podcast-msg-role">Репетитор</span>
+          <div class="podcast-msg-body">
+            Привіт! Я поставлю тобі питання по темі «{{ lesson.title }}». Напиши «Почнемо» або будь-яке повідомлення — отримаєш перше питання.
+          </div>
+        </div>
+        {% else %}
+        {% for msg in podcast_messages %}
+        <div class="podcast-msg podcast-msg-{{ msg.role }}">
+          <span class="podcast-msg-role">{% if msg.role == 'assistant' %}Репетитор{% else %}Ти{% endif %}</span>
+          <div class="podcast-msg-body">{{ msg.content|linebreaksbr }}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+      <form class="podcast-form" id="podcast-form">
+        {% csrf_token %}
+        <textarea id="podcast-input" class="podcast-input" rows="2" placeholder="Твоя відповідь..." maxlength="2000"></textarea>
+        <button type="submit" class="btn btn-primary" id="podcast-send">Надіслати</button>
+      </form>
+    </div>
+    <p class="podcast-back">
+      <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}" class="btn btn-secondary">← Назад до уроку</a>
+    </p>
+  </div>
+</section>
+
+<script>
+(function() {
+  var form = document.getElementById('podcast-form');
+  var input = document.getElementById('podcast-input');
+  var list = document.getElementById('podcast-messages');
+  var sendBtn = document.getElementById('podcast-send');
+  var welcome = document.getElementById('podcast-welcome');
+  var apiUrl = "{% url 'lesson_podcast_api' course_slug=course.slug lesson_slug=lesson.slug %}";
+  var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+  var csrfToken = csrf ? csrf.value : '{{ csrf_token }}';
+
+  function escapeHtml(s) {
+    var div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function addMessage(role, text) {
+    var wrap = document.createElement('div');
+    wrap.className = 'podcast-msg podcast-msg-' + role;
+    var roleLabel = role === 'assistant' ? 'Репетитор' : 'Ти';
+    wrap.innerHTML = '<span class="podcast-msg-role">' + escapeHtml(roleLabel) + '</span><div class="podcast-msg-body">' + escapeHtml(text).replace(/\n/g, '<br>') + '</div>';
+    list.appendChild(wrap);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var text = (input.value || '').trim();
+    if (!text) return;
+    addMessage('user', text);
+    input.value = '';
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Чекай...';
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', apiUrl);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('X-CSRFToken', csrfToken);
+    xhr.onload = function() {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Надіслати';
+      try {
+        var res = JSON.parse(xhr.responseText || '{}');
+        if (res.ok && res.reply) {
+          if (welcome) welcome.style.display = 'none';
+          addMessage('assistant', res.reply);
+        } else {
+          addMessage('assistant', res.reply || 'Помилка. Спробуй ще раз.');
+        }
+      } catch (err) {
+        addMessage('assistant', 'Помилка відповіді сервера.');
+      }
+    };
+    xhr.onerror = function() {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Надіслати';
+      addMessage('assistant', 'Помилка мережі.');
+    };
+    xhr.send(JSON.stringify({ message: text }));
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Помилка сервера — LearnCode</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <span class="logo-icon">◇</span>
+        <span class="logo-text">LearnCode</span>
+      </a>
+      <nav class="nav">
+        <a href="/">Головна</a>
+      </nav>
+    </div>
+  </header>
+  <main class="main-content">
+    <section class="section" style="padding: 120px 0; text-align: center;">
+      <div class="container container--narrow">
+        <p class="page-hero-desc" style="font-size: 4rem; line-height: 1; margin-bottom: 16px;" aria-hidden="true">😵</p>
+        <h1 style="margin-bottom: 12px;">Щось пішло не так</h1>
+        <p class="page-hero-desc" style="margin-bottom: 28px;">Ми вже працюємо над вирішенням. Спробуйте оновити сторінку або повернутися пізніше.</p>
+        <a href="/" class="btn btn-primary">На головну</a>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <p class="footer-copy">© 2026 LearnCode</p>
+    </div>
+  </footer>
+</body>
+</html>

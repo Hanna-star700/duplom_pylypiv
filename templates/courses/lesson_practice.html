@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI-практика: {{ topic }} — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="{% url 'home' %}">Головна</a> →
+      <a href="{% url 'course_detail' slug=course.slug %}">{{ course.title }}</a> →
+      <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}">{{ lesson.title }}</a> →
+      <span>AI-практика</span>
+    </nav>
+    <h1>Задача з AI</h1>
+    <p class="page-hero-desc">Тема: <strong>{{ topic }}</strong> ({{ language }}). Згенеруйте завдання, напишіть код — AI оцінить рішення (1–10), вкаже помилки та поради.</p>
+    {% if attempts_count > 0 %}
+    <p class="page-hero-stats">Спроби з цього уроку: {{ attempts_count }}</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section ai-practice-section">
+  <div class="container container--narrow">
+    <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}" class="lesson-back lesson-back-circle" aria-label="Назад до уроку"><span class="lesson-back-arrow" aria-hidden="true">←</span></a>
+    {% if not ai_available %}
+    <div class="ai-practice-alert" role="alert">
+      Для роботи AI-практики додайте змінну середовища <code>OPENAI_API_KEY</code>. Поки що можна переглянути інтерфейс.
+    </div>
+    {% endif %}
+
+    <div class="ai-practice-block reveal">
+      <h2 class="section-title">1. Згенерувати задачу</h2>
+      <form method="post" class="ai-practice-form">
+        {% csrf_token %}
+        <button type="submit" name="generate" class="btn btn-primary" {% if not ai_available %}disabled{% endif %}>
+          Згенерувати задачу з AI
+        </button>
+      </form>
+    </div>
+
+    {% if task %}
+    <div class="ai-practice-block ai-practice-task reveal">
+      <h2 class="section-title">2. Задача</h2>
+      <div class="ai-practice-task-text">{{ task|linebreaks }}</div>
+
+      <h2 class="section-title">3. Ваш код</h2>
+      <form method="post" class="ai-practice-form">
+        {% csrf_token %}
+        <textarea name="code" rows="14" class="ai-practice-code" placeholder="Напишіть код тут..." spellcheck="false">{{ code }}</textarea>
+        <button type="submit" name="check" class="btn btn-primary" style="margin-top: 16px;">
+          Перевірити код
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if result %}
+      {% if feedback_score != None %}
+    <div class="ai-result-screen reveal">
+      <div class="ai-result-progress-wrap">
+        <div class="ai-result-progress">
+          <div class="ai-result-progress-bar" style="width: {{ feedback_score|default:0 }}0%;"></div>
+        </div>
+        <span class="ai-result-progress-label">{{ feedback_score }}/10</span>
+      </div>
+      <div class="ai-result-celebration">
+        <span class="ai-result-emoji">👍</span>
+        <h2 class="ai-result-title">{% if feedback_score >= 7 %}Браво!{% else %}Можна краще!{% endif %}</h2>
+        <p class="ai-result-mastery">Майстерність {% if feedback_score >= 7 %}+{{ feedback_score }}0%{% else %}{{ feedback_score }}0%{% endif %}</p>
+      </div>
+      <div class="result-achievement result-achievement--score-{{ feedback_score }}">
+        <span class="result-achievement-icon">
+          {% if feedback_score == 10 %}🏆{% elif feedback_score >= 9 %}🥇{% elif feedback_score >= 7 %}🔥{% elif feedback_score >= 5 %}💪{% elif feedback_score >= 3 %}🐢{% elif feedback_score == 1 %}😅{% else %}🙂{% endif %}
+        </span>
+        <span class="result-achievement-title">
+          {% if feedback_score == 10 %}«10/10 — Легенда коду!»{% elif feedback_score >= 9 %}«Майже ідеально»{% elif feedback_score >= 7 %}«Майже як у Ворлд оф Тенкс — топ»{% elif feedback_score >= 5 %}«Середнячок — але вперед!»{% elif feedback_score >= 3 %}«Помалу, але рухаємось»{% elif feedback_score == 1 %}«1 бал — це тільки початок!»{% else %}«Наступного разу буде краще!»{% endif %}
+        </span>
+        <span class="result-achievement-desc">
+          {% if feedback_score == 10 %}Ідеальний результат. Вітаємо! Як у найкращих танкістів.{% elif feedback_score >= 9 %}Чудово, ще трохи — і десятка.{% elif feedback_score >= 7 %}Хороший результат, так тримати.{% elif feedback_score >= 5 %}Є куди рости, але основа вже є.{% elif feedback_score >= 3 %}Практика робить майстра.{% elif feedback_score == 1 %}Не здавайся — спробуй ще раз, буде краще!{% else %}Ти на правильному шляху.{% endif %}
+        </span>
+      </div>
+      <div class="ai-result-cards">
+        <div class="ai-result-card">
+          <span class="ai-result-card-label">Результат</span>
+          <span class="ai-result-card-value ai-result-card-value--green">{{ feedback_score }}/10</span>
+          <span class="ai-result-card-sublabel">балів з 10</span>
+        </div>
+        <div class="ai-result-card">
+          <span class="ai-result-card-label">Точність</span>
+          <div class="ai-result-circle-wrap">
+            <svg class="ai-result-circle" viewBox="0 0 36 36">
+              <path class="ai-result-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <path class="ai-result-circle-fill" stroke-dasharray="{{ feedback_score }}0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            </svg>
+            <span class="ai-result-circle-text">{{ feedback_score }}0%</span>
+          </div>
+        </div>
+        <div class="ai-result-card">
+          <span class="ai-result-card-label">Витрачений час</span>
+          <span class="ai-result-card-value">—</span>
+          <span class="ai-result-card-sublabel">не вимірювалось</span>
+        </div>
+      </div>
+      <div class="ai-result-tutor">
+        <div class="ai-result-tutor-header">
+          <span class="ai-result-tutor-icon">📈</span>
+          <span class="ai-result-tutor-title">Відгук від вашого репетитора</span>
+          <button type="button" class="ai-result-tutor-toggle" aria-expanded="false" aria-controls="ai-tutor-feedback" id="ai-tutor-toggle">Відкрити</button>
+        </div>
+        <div class="ai-result-tutor-body" id="ai-tutor-feedback" hidden>
+          <pre class="ai-practice-feedback">{{ result }}</pre>
+        </div>
+      </div>
+      <div class="ai-result-actions">
+        <a href="{% url 'lesson_practice' course_slug=course.slug lesson_slug=lesson.slug %}" class="btn btn-secondary">🔄 Повторити</a>
+        <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}" class="btn btn-primary">Наступний урок →</a>
+      </div>
+    </div>
+      {% else %}
+    <div class="ai-practice-block ai-practice-result reveal">
+      <h2 class="section-title">Результат перевірки</h2>
+      <pre class="ai-practice-feedback">{{ result }}</pre>
+    </div>
+      {% endif %}
+    {% endif %}
+
+    <div class="detail-actions" style="margin-top: 48px;">
+      <a href="{% url 'lesson_detail' course_slug=course.slug lesson_slug=lesson.slug %}" class="btn btn-secondary">← Назад до уроку</a>
+      <a href="{% url 'course_detail' slug=course.slug %}" class="btn btn-ghost">До курсу</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  var btn = document.getElementById('ai-tutor-toggle');
+  var block = document.getElementById('ai-tutor-feedback');
+  if (btn && block) {
+    btn.addEventListener('click', function(){
+      var open = block.hidden;
+      block.hidden = !open;
+      btn.setAttribute('aria-expanded', open);
+      btn.textContent = open ? 'Згорнути' : 'Відкрити';
+      btn.classList.toggle('is-open', open);
+    });
+  }
+})();
+</script>
+{% endblock %}

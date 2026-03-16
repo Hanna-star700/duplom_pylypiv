@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Змагання — LearnCode{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>Змагання</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="courses-grid">
+      {% for comp in competitions %}
+      <a href="{% url 'competition_detail' slug=comp.slug %}" class="course-card reveal">
+        <div class="course-card-icon">🏆</div>
+        <h3>{{ comp.name }}</h3>
+        <div class="course-card-meta">
+          <span>Початок: {{ comp.start_at|date:"d.m.Y" }}</span>
+          <span>Кінець: {{ comp.end_at|date:"d.m.Y" }}</span>
+        </div>
+        <p>{{ comp.description|default:""|truncatewords:20 }}</p>
+        <span class="card-link">Деталі →</span>
+      </a>
+      {% empty %}
+      <p class="reveal" style="grid-column: 1/-1; color: var(--text-secondary);">Найближчим часом з’являться нові змагання.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
